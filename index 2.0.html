@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FinQuest: Operación Rescate Corporativo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B132B; --navy2:#1C2541; --teal:#47A8BD; --teal-bright:#00E5FF;
+  --orange:#F3A712; --green:#28C27B; --white:#FFFFFF; --red:#FF5A5A;
+  --glass:rgba(28,37,65,0.55); --glass-border:rgba(71,168,189,0.35);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{
+  margin:0; min-height:100%; background:radial-gradient(ellipse at top, #142042 0%, var(--navy) 60%);
+  color:var(--white); font-family:'Inter',sans-serif; overflow-x:hidden;
+}
+.mono{font-family:'Roboto Mono',monospace;}
+.title-font{font-family:'Montserrat',sans-serif; font-weight:800;}
+#app{min-height:100vh; display:flex; flex-direction:column;}
+
+/* Glass panel */
+.glass{
+  background:var(--glass); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--glass-border); border-radius:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);
+}
+
+/* Header */
+header.hud{
+  padding-top:calc(14px + env(safe-area-inset-top,0px));
+  position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between;
+  padding-left:20px; padding-right:20px; padding-bottom:14px;
+  background:linear-gradient(180deg, rgba(11,19,43,0.96), rgba(11,19,43,0.85));
+  border-bottom:1px solid var(--glass-border); gap:16px; flex-wrap:wrap;
+}
+.brand{display:flex; flex-direction:column; line-height:1.15;}
+.brand .b1{font-size:18px; letter-spacing:0.5px;}
+.brand .b2{font-size:11px; color:var(--teal); font-weight:600;}
+.confidence-wrap{flex:1; min-width:220px; max-width:420px; text-align:center;}
+.confidence-label{font-size:11px; color:#B9C2D6; margin-bottom:6px; font-weight:600;}
+.progress-track{height:10px; border-radius:6px; background:rgba(255,255,255,0.08); overflow:hidden; border:1px solid var(--glass-border);}
+.progress-fill{height:100%; background:linear-gradient(90deg, var(--teal), var(--green)); width:0%; transition:width .5s ease;}
+.progress-pct{font-size:12px; margin-top:4px; color:var(--green); font-weight:700;}
+.timer-box{display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:10px; font-size:20px; font-weight:700;}
+.timer-normal{color:var(--teal-bright);}
+.timer-warn{color:var(--orange); animation:pulse 1.5s infinite;}
+.timer-danger{color:var(--red); animation:pulse .8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+main{flex:1; display:flex; flex-direction:column; align-items:center; padding:24px 16px 60px; gap:20px;}
+.screen{width:100%; max-width:980px; display:flex; flex-direction:column; gap:18px; animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:translateY(0);}}
+
+/* Intro */
+.intro-card{padding:40px 32px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;}
+.intro-card h1{font-size:34px; margin:0; letter-spacing:0.5px;}
+.intro-card .sub{color:var(--orange); font-weight:600; font-size:15px; margin-bottom:6px;}
+.intro-facts{display:flex; flex-direction:column; gap:8px; margin:14px 0; font-size:15px; color:#D7DEEC; text-align:left; max-width:420px;}
+.btn{
+  cursor:pointer; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-weight:700;
+  padding:14px 28px; font-size:15px; letter-spacing:0.3px; transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn:focus-visible{outline:2px solid var(--teal-bright); outline-offset:2px;}
+.btn-primary{background:linear-gradient(90deg, var(--teal), var(--teal-bright)); color:#04222A; box-shadow:0 4px 20px rgba(0,229,255,0.35);}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-secondary{background:transparent; border:1px solid var(--glass-border); color:var(--white);}
+.btn-secondary:hover{border-color:var(--teal-bright); color:var(--teal-bright);}
+.license-link{background:none; border:none; color:#8FA3C4; text-decoration:underline; cursor:pointer; font-size:12px; margin-top:6px;}
+
+/* CLEO */
+.cleo-msg{display:flex; gap:12px; align-items:flex-start; padding:16px 18px;}
+.cleo-avatar{font-size:26px; flex-shrink:0; width:44px; height:44px; border-radius:50%; background:rgba(71,168,189,0.18); display:flex; align-items:center; justify-content:center; border:1px solid var(--teal);}
+.cleo-text{flex:1;}
+.cleo-name{font-size:12px; font-weight:700; color:var(--teal-bright); letter-spacing:0.5px; margin-bottom:4px;}
+.cleo-text p{margin:0; font-size:14.5px; line-height:1.5; color:#E7ECF6;}
+
+/* Mission header */
+.mission-tag{display:inline-flex; align-items:center; gap:8px; align-self:flex-start; padding:6px 14px; border-radius:8px; background:rgba(243,167,18,0.12); border:1px solid rgba(243,167,18,0.4); color:var(--orange); font-size:12px; font-weight:700;}
+.mission-title{font-size:24px; margin:4px 0 0;}
+.mission-body{padding:22px;}
+
+/* Drag & drop mission 1 */
+.dnd-cards{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; padding:14px;}
+.dnd-card{
+  padding:14px 18px; border-radius:10px; cursor:grab; font-weight:600; font-size:14px;
+  background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); user-select:none;
+}
+.dnd-card.dragging{opacity:0.4;}
+.dnd-card.placed{opacity:0; pointer-events:none; height:0; padding:0; margin:0; overflow:hidden;}
+.vaults{display:flex; gap:16px; flex-wrap:wrap;}
+.vault{flex:1; min-width:220px; min-height:130px; border-radius:14px; padding:16px; border:2px dashed var(--glass-border); background:rgba(255,255,255,0.03); transition:border-color .2s, background .2s;}
+.vault.dragover{border-color:var(--teal-bright); background:rgba(0,229,255,0.06);}
+.vault h4{margin:0 0 10px; font-size:14px; color:var(--teal-bright);}
+.vault .slot-item{padding:8px 12px; border-radius:8px; background:rgba(40,194,123,0.15); border:1px solid var(--green); font-size:13px; margin-bottom:6px; font-weight:600;}
+
+/* Selection */
+.select-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; padding:14px;}
+.select-item{padding:16px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); cursor:pointer; text-align:center; font-weight:600; font-size:14px; transition:all .15s;}
+.select-item.selected{border-color:var(--teal-bright); background:rgba(0,229,255,0.12); box-shadow:0 0 0 1px var(--teal-bright);}
+.select-item:hover{border-color:var(--teal);}
+
+/* Formula spot error */
+.formula-box{padding:20px; text-align:center; font-size:20px; border-radius:12px; background:rgba(255,90,90,0.08); border:1px solid rgba(255,90,90,0.4); margin:10px 0;}
+.formula-error{color:var(--red); font-weight:700;}
+
+/* Matching mission 4 */
+.match-wrap{display:flex; gap:24px; flex-wrap:wrap; justify-content:center; padding:10px;}
+.match-col{display:flex; flex-direction:column; gap:10px; min-width:220px;}
+.match-item{padding:12px 14px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); cursor:pointer; font-size:13.5px; font-weight:600; text-align:center;}
+.match-item.selected{border-color:var(--teal-bright); background:rgba(0,229,255,0.14);}
+.match-item.matched{border-color:var(--green); background:rgba(40,194,123,0.16); cursor:default;}
+.match-item.wrong-flash{border-color:var(--orange); animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+/* Feedback */
+.feedback-box{padding:16px 18px; border-radius:12px; display:flex; gap:12px; align-items:flex-start; animation:fadeIn .3s ease;}
+.fb-correct{background:rgba(40,194,123,0.12); border:1px solid var(--green);}
+.fb-incorrect{background:rgba(243,167,18,0.1); border:1px solid var(--orange);}
+.fb-icon{font-size:20px;}
+.actions-row{display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;}
+
+/* modal */
+.modal-overlay{position:fixed; inset:0; background:rgba(4,8,20,0.72); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;}
+.modal-box{max-width:480px; width:100%; padding:30px; text-align:center;}
+.modal-box h2{margin-top:0;}
+
+/* victory */
+.victory-badge{font-size:60px; text-align:center;}
+.summary-table{width:100%; border-collapse:collapse; margin-top:10px;}
+.summary-table th,.summary-table td{padding:10px 8px; text-align:left; font-size:13px; border-bottom:1px solid var(--glass-border);}
+.summary-table th{color:var(--teal-bright); font-size:11px; letter-spacing:0.5px;}
+
+@media (max-width:640px){
+  .intro-card h1{font-size:26px;}
+  header.hud{padding-left:14px; padding-right:14px;}
+  .brand .b1{font-size:15px;}
+  .timer-box{font-size:16px; padding:6px 10px;}
+}
+:root:not([data-theme="light"]){}
+.match-wrap{position:relative; flex-wrap:nowrap; gap:64px; align-items:stretch;}
+.match-col{flex:1; min-width:0;}
+.match-svg{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible;}
+.tok{cursor:pointer; padding:2px 8px; border-radius:6px; border:1px dashed var(--glass-border);}
+.tok-err{border-color:var(--red); color:var(--red); cursor:default;}
+.match-item.matched{box-shadow:0 0 14px rgba(40,194,123,.35);}
+@media (max-width:640px){.match-wrap{gap:36px;} .match-item{font-size:12px; padding:10px 8px;} .formula-box{font-size:15px;}}
+.theory-p{margin:0 0 10px; font-size:14px; line-height:1.6; color:#E7ECF6;}
+.theory-p sup{color:var(--teal); font-size:10px;}
+.hl{color:var(--teal-bright);}
+.key-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+.key-chip{padding:6px 12px; border-radius:8px; font-size:12.5px; font-weight:600; background:rgba(0,229,255,0.08); border:1px solid var(--glass-border);}
+.ref-card{padding:10px 12px; margin-top:8px; border-radius:10px; text-align:left; font-size:12.5px; line-height:1.5; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border);}
+@keyframes draw{from{stroke-dashoffset:1;}to{stroke-dashoffset:0;}}
+.ln{stroke-dasharray:1; animation:draw .35s ease forwards;}
+.eval-grid{display:flex; gap:12px; flex-wrap:wrap; width:100%;}
+.eval-box{flex:1; min-width:200px; padding:14px; text-align:center;}
+.eval-val{font-size:30px; font-weight:700; margin-top:6px;}
+.eval-cat{padding:14px 22px; border-color:var(--orange);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------------- Icons (inline minimal SVG, lucide-style) ---------------- */
+const ICON = {
+  clock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  shield:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>',
+  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>',
+  alert:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg>',
+  target:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>',
+  robot:'🤖'
+};
+
+/* ---------------- Question banks ---------------- */
+const I=(t,d)=>({t,dest:d});
+const G1='El Balance General muestra lo que la empresa posee y debe; el Estado de Resultados, lo que ganó y gastó durante el periodo.';
+const M1_BANK={
+ A:{items:[I('Ventas','er'),I('Activo Corriente','bg'),I('Patrimonio','bg'),I('Costo de Ventas','er')],h:[G1,'Ventas y Costo de Ventas describen la actividad del periodo; Activo Corriente y Patrimonio describen la situación de la empresa en un momento dado.']},
+ B:{items:[I('Efectivo y Equivalentes de Efectivo','bg'),I('Cuentas por Cobrar','bg'),I('Gastos Administrativos','er'),I('Utilidad Neta','er')],h:[G1,'Efectivo y Cuentas por Cobrar son recursos que la empresa posee; los gastos y la utilidad resultan de la actividad del periodo.']},
+ C:{items:[I('Inventarios','bg'),I('Pasivo Corriente','bg'),I('Ingresos por Ventas','er'),I('Gastos Financieros','er')],h:[G1,'Inventarios y Pasivo Corriente muestran la situación financiera; los ingresos y los gastos financieros se generan durante el periodo.']},
+ D:{items:[I('Activos Totales','bg'),I('Deuda Total','bg'),I('Costo de Ventas','er'),I('Utilidad Operativa','er')],h:[G1,'Activos y deuda muestran la situación de la empresa en un momento dado; el costo y la utilidad operativa se miden durante el periodo.']}
+};
+const LIQ={g:'La liquidez compara los recursos que se convierten en efectivo en el corto plazo con las obligaciones que vencen en ese mismo plazo. Revisa qué opciones cumplen ambos criterios.',h:['La liquidez mira el corto plazo: compara lo que la empresa tiene con lo que debe pagar pronto.','Busca los rubros "corrientes", tanto del lado del activo como del pasivo.'],ex:'Liquidez Corriente = Activo Corriente / Pasivo Corriente.',c:['Activo Corriente','Pasivo Corriente']};
+const DEB={h:['Este ratio compara el financiamiento de terceros con el aporte de los dueños.','Piensa qué rubros representan lo que se debe a terceros y qué rubro representa lo que aportan los dueños.'],g:'Este ratio compara lo que la empresa debe a terceros con lo que aportan sus dueños. Revisa qué opciones representan cada lado de esa comparación.'};
+const M2_BANK={
+ A:{...LIQ,q:'AFT, aísla las variables necesarias para calcular el Ratio de Liquidez Corriente.',d:['Activo No Corriente','Pasivo No Corriente','Patrimonio']},
+ B:{...DEB,c:['Deuda Total','Patrimonio'],ex:'Deuda/Patrimonio = Deuda Total / Patrimonio.',q:'AFT, aísla las variables necesarias para calcular la relación Deuda/Patrimonio.',d:['Activo Corriente','Ventas','Utilidad Neta']},
+ C:{...LIQ,q:'AFT, aísla las variables necesarias para calcular el Ratio de Liquidez Corriente.',d:['Activo No Corriente','Deuda a Largo Plazo','Costo de Ventas']},
+ D:{...DEB,c:['Pasivo Total','Patrimonio'],ex:'Estructura financiera = Pasivo Total / Patrimonio.',q:'AFT, aísla las variables necesarias para analizar la estructura financiera mediante la relación entre deuda y patrimonio.',d:['Activo Corriente','Costo de Ventas','Ventas']}
+};
+const M3_BANK={
+ A:{label:'ROA',num:'Utilidad Neta',wrong:'Patrimonio',correct:'Activos Totales',d:['Ventas','Pasivos Totales'],h:['El ROA mide la utilidad que generan los recursos totales de la empresa.','La utilidad se compara con todo lo que la empresa posee, no con el aporte de los dueños.'],ex:'ROA = Utilidad Neta / Activos Totales: relaciona la utilidad con todos los activos.'},
+ B:{label:'ROE',num:'Utilidad Neta',wrong:'Activos Totales',correct:'Patrimonio',d:['Ventas','Pasivos Totales'],h:['El ROE mide la utilidad obtenida para los dueños de la empresa.','La utilidad se compara con el aporte de los dueños, no con todos los recursos.'],ex:'ROE = Utilidad Neta / Patrimonio: relaciona la utilidad con el patrimonio.'},
+ C:{label:'Margen Neto',num:'Utilidad Neta',wrong:'Activos Totales',correct:'Ventas',d:['Patrimonio','Pasivos Totales'],h:['El Margen Neto mide cuánta utilidad queda de lo que la empresa vende.','La utilidad se compara con el ingreso por la actividad del periodo.'],ex:'Margen Neto = Utilidad Neta / Ventas: relaciona la utilidad con las ventas.'},
+ D:{label:'Rotación de Activos',num:'Ventas',wrong:'Patrimonio',correct:'Activos Totales',d:['Utilidad Neta','Pasivos Totales'],h:['Este ratio de gestión mide cuánto vende la empresa con los recursos que posee.','Las ventas se comparan con todos los recursos de la empresa, no solo con el aporte de los dueños.'],ex:'Rotación de Activos = Ventas / Activos Totales: relaciona las ventas con los activos.'}
+};
+const M4_A=[{id:'liq',label:'Liquidez'},{id:'sol',label:'Solvencia'},{id:'ges',label:'Gestión'},{id:'ren',label:'Rentabilidad'}];
+const M4_BANK={
+ A:['Activo Corriente + Pasivo Corriente','Deuda Total + Patrimonio','Ventas + Activos','Utilidad Neta + Patrimonio'],
+ B:['Activo Corriente + Pasivo Corriente','Pasivo Total + Patrimonio','Ventas + Activos Totales','Utilidad Neta + Patrimonio'],
+ C:['Activos Corrientes + Pasivos Corrientes','Pasivos Totales + Patrimonio','Ventas + Activos / cuentas relacionadas con actividad','Utilidad Neta + Patrimonio'],
+ D:['Activo Corriente + Pasivo Corriente','Pasivo Total + Patrimonio','Ventas + Activos','Utilidad Neta + Patrimonio']
+};
+const FAM_H={liq:'La liquidez usa rubros corrientes: recursos y obligaciones de corto plazo.',sol:'La solvencia compara la deuda o los pasivos con el patrimonio.',ges:'La gestión relaciona las ventas con los activos que las generan.',ren:'La rentabilidad relaciona la utilidad con el patrimonio.'};
+
+function pick(bank){ return bank[Math.floor(Math.random()*bank.length)]; }
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+
+/* ---------------- App State ---------------- */
+const state = {
+  screen:'intro', // intro, brief, m1, m2, m3, m4, timeout, victory
+  confidence:0,
+  timeRemaining:900,
+  timerId:null,
+  gameStarted:false,
+  showLicense:false,
+  warned5:false, warned2:false,
+  mission1: null, mission2:null, mission3:null, mission4:null,
+  attempts:{1:0,2:0,3:0,4:0},
+  completed:{1:false,2:false,3:false,4:false},
+  feedback:null, // {type:'correct'|'incorrect', text}
+  showReview:false, showRefs:false, briefing:false,
+  round:{1:1,2:1,3:1,4:1}, roundDone:{1:false,2:false,3:false,4:false}, qAttempts:{1:0,2:0,3:0,4:0}
+};
+
+function resetGame(){
+  clearInterval(state.timerId);
+  Object.assign(state, {
+    screen:'intro', confidence:0, timeRemaining:900, timerId:null, gameStarted:false,
+    showLicense:false, warned5:false, warned2:false, feedback:null, showReview:false, showRefs:false, briefing:false,
+    round:{1:1,2:1,3:1,4:1}, roundDone:{1:false,2:false,3:false,4:false}, qAttempts:{1:0,2:0,3:0,4:0},
+    attempts:{1:0,2:0,3:0,4:0}, completed:{1:false,2:false,3:false,4:false}
+  });
+  render();
+}
+
+const VARIANTS=['A','B','C','D'];
+const usedVariants={1:[],2:[],3:[],4:[]};
+function selectRandomVariant(n,list=VARIANTS){
+  let pool=list.filter(v=>!usedVariants[n].includes(v));
+  if(!pool.length){ const last=usedVariants[n][usedVariants[n].length-1]; usedVariants[n]=[]; pool=list.filter(v=>v!==last); }
+  const v=pool[Math.floor(Math.random()*pool.length)];
+  usedVariants[n].push(v); return v;
+}
+function setupMission1(){
+  const q=M1_BANK[selectRandomVariant(1)];
+  const list=d=>q.items.filter(i=>i.dest===d).map(i=>i.t).join(', ');
+  state.roundDone[1]=false; state.qAttempts[1]=0; state.mission1={items:shuffle(q.items.map(i=>({...i,placed:false}))),selectedIdx:null,v:{h:[q.h[0],'Pregúntate por cada dato: ¿describe algo que la empresa posee o debe en un momento dado, o algo que ganó o gastó durante el periodo?'],g:'El Balance General agrupa activos, pasivos y patrimonio; el Estado de Resultados agrupa ingresos, costos, gastos y utilidades. Clasifica cada dato según el grupo al que pertenece.'}};
+}
+function setupMission2(){
+  const q=M2_BANK[selectRandomVariant(2)];
+  state.roundDone[2]=false; state.qAttempts[2]=0; state.mission2={options:shuffle([...q.c,...q.d]),correct:q.c,selected:[],q:q.q,v:q};
+}
+function setupMission3(){
+  const q=M3_BANK[selectRandomVariant(3)];
+  state.roundDone[3]=false; state.qAttempts[3]=0; state.mission3={...q,v:q,options:shuffle([q.correct,q.wrong,...q.d]),selected:null,step:1,correctFull:q.ex.split(':')[0]};
+}
+const M3_G={A:'El ROA evalúa la rentabilidad sobre el conjunto de recursos que la empresa utiliza para operar. Elige el término que represente ese conjunto.',B:'El ROE evalúa la rentabilidad para quienes aportan el capital propio. Elige el término que represente ese aporte.',C:'El Margen Neto evalúa cuánta utilidad queda por cada unidad de ingreso de la actividad. Elige el término que represente ese ingreso.',D:'La Rotación de Activos evalúa cuánta actividad genera el conjunto de recursos de la empresa. Elige el término que represente ese conjunto.'};
+Object.keys(M3_G).forEach(k=>{ M3_BANK[k].g=M3_G[k]; });
+const M4_KEYS=['A','B','C','D','E'];
+M4_BANK.E=['Activo Corriente + Pasivo Corriente','Pasivo Total + Patrimonio','Ventas + Activos Totales','Utilidad Neta + Patrimonio'];
+const M4_L={E:['Liquidez corriente','Endeudamiento / Solvencia','Rotación de activos','ROE']};
+const M4_Q1={liq:'Capacidad para atender obligaciones de corto plazo.',sol:'Capacidad financiera para afrontar compromisos y estructura de financiamiento.',ges:'Eficiencia en el uso y rotación de los recursos de la empresa.',ren:'Capacidad de generar beneficios a partir de las ventas, activos o patrimonio.'};
+const H4='Revisa qué capacidad intenta medir este indicador. ¿Se relaciona con corto plazo, estructura financiera, eficiencia o generación de beneficios?';
+const G4='Cada familia responde una pregunta distinta: ¿puedo pagar pronto?, ¿cómo estoy financiado?, ¿uso bien mis recursos?, ¿genero beneficios? Relaciona cada elemento con la pregunta que responde y con los rubros que necesita para calcularse.';
+function setupMission4(){
+  state.roundDone[4]=false; state.qAttempts[4]=0;
+  const base={selectedA:null,matched:{},wrongFlash:null,wrongPair:null,newId:null};
+  if(state.round[4]===1){
+    state.mission4={...base,prompt:'AFT, une cada familia de ratios con aquello que analiza principalmente.',colA:shuffle(M4_A),colB:shuffle(M4_A.map(a=>({id:a.id,label:M4_Q1[a.id]}))),ok:'Diagnóstico conceptual confirmado. Ya sabes qué pregunta responde cada familia de ratios.'};
+    return;
+  }
+  const k=selectRandomVariant(4,M4_KEYS), q=M4_BANK[k], L=M4_L[k]||M4_A.map(a=>a.label);
+  state.mission4={...base,prompt:'AFT, conecta cada ratio con la información financiera que necesita.',colA:shuffle(M4_A.map((a,i)=>({id:a.id,label:L[i]}))),colB:shuffle(M4_A.map((a,i)=>({id:a.id,label:q[i]}))),ok:'Diagnóstico integrado correctamente. Has conectado cada ratio con la información financiera que necesita.'};
+}
+function failFb(n,v){
+  state.attempts[n]++; const a=++state.qAttempts[n]; state.fx='bad';
+  state.feedback={type:'incorrect',text:a>=3?v.g+' Vuelve a intentarlo.':a===2?v.h[1]:v.h[0]};
+}
+function reshuffle(n){
+  if(n===1) state.mission1.items=shuffle(state.mission1.items);
+  if(n===2||n===3) state['mission'+n].options=shuffle(state['mission'+n].options);
+}
+function applyFx(){
+  const f=state.fx; if(!f) return; state.fx=null;
+  const fb=document.querySelector('.feedback-box'), body=document.querySelector('.mission-body');
+  if(f==='bad' && body) body.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:320});
+  if(f==='ok' && fb) fb.animate([{transform:'scale(.96)',boxShadow:'0 0 0 rgba(40,194,123,0)'},{transform:'scale(1.03)',boxShadow:'0 0 28px rgba(40,194,123,.6)'},{transform:'scale(1)',boxShadow:'0 0 12px rgba(40,194,123,.3)'}],{duration:450});
+}
+function drawLines(){
+  const w=document.querySelector('.match-wrap'); if(!w) return;
+  const m=state.mission4, svg=w.querySelector('.match-svg'), r=w.getBoundingClientRect(); svg.innerHTML='';
+  const ln=(aid,bid,col,extra)=>{
+    const a=w.querySelector('[data-a="'+aid+'"]'), b=w.querySelector('[data-b="'+bid+'"]'); if(!a||!b) return;
+    const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+    svg.insertAdjacentHTML('beforeend','<line '+extra+' pathLength="1" x1="'+(ra.right-r.left)+'" y1="'+(ra.top+ra.height/2-r.top)+'" x2="'+(rb.left-r.left)+'" y2="'+(rb.top+rb.height/2-r.top)+'" stroke="'+col+'" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 5px '+col+')"/>');
+  };
+  Object.keys(m.matched).forEach(id=>ln(id,id,'#28C27B',id===m.newId?'class="ln"':'')); m.newId=null;
+  if(m.wrongPair) ln(m.wrongPair.a,m.wrongPair.b,'#F3A712','stroke-dasharray="0.04 0.03"');
+}
+window.addEventListener('resize',drawLines);
+
+function startTimer(){
+  state.gameStarted = true;
+  state.timerId = setInterval(()=>{
+    state.timeRemaining--;
+    if(state.timeRemaining === 300 && !state.warned5){ state.warned5 = true; }
+    if(state.timeRemaining === 120){ state.warned2 = true; }
+    if(state.timeRemaining <= 0){
+      state.timeRemaining = 0;
+      clearInterval(state.timerId);
+      if(state.screen==='victory'){ finishOperation(); return; }
+      state.screen = 'timeout';
+      render();
+    } else {
+      updateTimerDisplay();
+    }
+  }, 1000);
+}
+
+function finishOperation(){
+  clearInterval(state.timerId);
+  state.showReview = false; state.screen = 'final';
+  render();
+}
+const CATS=[
+ {max:420,ico:'🚀',n:'ANALISTA ÉLITE',m:'Diagnóstico excepcional. Has identificado y relacionado la información financiera con gran rapidez y precisión.'},
+ {max:600,ico:'🟢',n:'ANALISTA ESTRATÉGICO',m:'Excelente diagnóstico. Has resuelto el análisis con buen dominio y dentro de un tiempo eficiente.'},
+ {max:750,ico:'🟡',n:'ANALISTA EN DESARROLLO',m:'Diagnóstico completado. Has logrado relacionar la información financiera, aunque todavía puedes ganar velocidad.'},
+ {max:900,ico:'🔵',n:'ANALISTA OPERATIVO',m:'Diagnóstico completado. Has logrado cumplir la misión dentro del tiempo límite. Sigue reforzando la rapidez de análisis.'}
+];
+function fmtTime(s){
+  const m = Math.floor(s/60).toString().padStart(2,'0');
+  const sec = (s%60).toString().padStart(2,'0');
+  return m+':'+sec;
+}
+
+function timerClass(){
+  return state.timeRemaining<=120 ? 'timer-danger' : state.timeRemaining<=300 ? 'timer-warn' : 'timer-normal';
+}
+
+function updateTimerDisplay(){
+  const timerBox = document.querySelector('.timer-box');
+  if(!timerBox){ return; }
+  timerBox.className = 'timer-box glass '+timerClass();
+  timerBox.innerHTML = `${ICON.clock}<span class="mono">${fmtTime(state.timeRemaining)}</span>`;
+}
+
+function setConfidence(n){
+  state.roundDone[n]=true;
+  if(state.round[n]===2 && !state.completed[n]){
+    state.completed[n]=true; state.confidence=Math.min(100,state.confidence+25);
+    if(n===4){ clearInterval(state.timerId); state.elapsed=900-state.timeRemaining; }
+  }
+}
+
+function goNext(current){
+  state.feedback = null;
+  const order = ['m1','m2','m3','m4'];
+  const idx = order.indexOf(current);
+  if(idx === order.length-1){
+    state.screen = 'victory';
+  } else {
+    state.screen = order[idx+1];
+    [setupMission2,setupMission3,setupMission4][idx](); state.briefing=true; state.round[idx+2]=1;
+  }
+  render();
+}
+
+/* ---------------- CLEO messages ---------------- */
+const CLEO = {
+  intro:"Hola. Bienvenido a bordo, Analista Financiero Táctico (AFT): así te llamaremos durante esta operación. Industrias Nova enfrenta una junta de accionistas crítica y tu misión es construir, en 15 minutos, un Diagnóstico Financiero Express que demuestre su verdadera situación. Yo soy C.L.E.O., tu guía. No necesitas memorizar fórmulas: necesitas saber qué información financiera necesitas y por qué. ¿Comenzamos?",
+  m1:"Ahora que conoces el mapa, necesitamos ubicar cada dato en el lugar correcto. AFT, prepara el escaneo.",
+  m2:"Los signos vitales financieros están claros: primero identificamos qué necesita Nova para cubrir sus compromisos y después analizamos cómo está financiada. Selecciona los insumos correctos.",
+  m3:"El motor está encendido, AFT. Ahora debemos comprobar si las fórmulas realmente están conectando los datos correctos. Busca cualquier anomalía.",
+  m4:"Llegamos al punto crítico. Ya no basta con reconocer datos aislados. Debes conectar cada familia de ratios con la información que realmente necesita."
+};
+
+const B=(x)=>'<b class="hl">'+x+'</b>';
+const MTITLE={1:'El Escaneo de la Zona Cero',2:'Signos Vitales',3:'El Rendimiento del Motor',4:'El Diagnóstico Final'};
+const THEORY={
+ 1:{icon:'📘',title:'El mapa de los datos financieros',p:[
+  'Para evaluar la salud de una empresa primero hay que leer su mapa: los estados financieros. El '+B('Balance General')+' (Estado de Situación Financiera) muestra lo que la empresa tiene, debe y aporta en un momento determinado. El '+B('Estado de Resultados')+' muestra cómo se generaron ingresos, costos, gastos y resultados durante un periodo. El '+B('Estado de Flujos de Efectivo')+' muestra las entradas y salidas de efectivo.',
+  'Por sí solos, los datos son solo números. El diagnóstico comienza con los '+B('ratios financieros')+': relaciones matemáticas entre cuentas contables que convierten datos dispersos en información útil para el análisis y la toma de decisiones.'],
+  k:['Balance General → posición financiera','Estado de Resultados → desempeño del periodo','Flujo de Efectivo → movimientos de efectivo','Ratios → relación entre datos financieros']},
+ 2:{icon:'🛡️',title:'Ratios de supervivencia: Liquidez y Solvencia',p:[
+  'Antes de crecer, una empresa debe asegurar que puede mantenerse en pie. La supervivencia financiera se analiza desde dos perspectivas: liquidez y solvencia.',
+  'La '+B('liquidez')+' evalúa la capacidad de atender obligaciones de corto plazo con recursos corrientes. Por ejemplo, la liquidez corriente relaciona el Activo Corriente con el Pasivo Corriente.',
+  'La '+B('solvencia')+' se relaciona con la capacidad de afrontar compromisos en un horizonte más amplio y con la estructura de financiamiento. Puede analizarse con relaciones entre pasivos, deuda, activos y patrimonio, según el ratio específico de cada actividad.'],
+  k:['LIQUIDEZ → corto plazo','SOLVENCIA → estructura financiera / largo plazo','Activo Corriente ↔ Pasivo Corriente','Deuda ↔ Patrimonio']},
+ 3:{icon:'⚙️',title:'Ratios de desempeño: Gestión y Rentabilidad',p:[
+  'Tener recursos y una estructura estable no basta: la empresa debe usar sus recursos con eficiencia y generar resultados. Aquí vemos dos bloques: gestión y rentabilidad.',
+  'Los ratios de '+B('gestión')+' o actividad analizan cómo se utilizan ciertos recursos; por ejemplo, relacionan las ventas con los activos, o miden la rotación de inventarios y el periodo de cobro. Los ratios de '+B('rentabilidad')+' relacionan los resultados con las ventas, los activos o el patrimonio: margen neto, ROA y ROE.',
+  'Fórmulas de esta misión: '+B('ROA')+' = Utilidad Neta / Activos Totales · '+B('ROE')+' = Utilidad Neta / Patrimonio · '+B('Margen Neto')+' = Utilidad Neta / Ventas · '+B('Rotación de Activos')+' = Ventas / Activos Totales.'],
+  k:['GESTIÓN → utilización / eficiencia de recursos','RENTABILIDAD → generación de resultados','Ventas ↔ Activos','Utilidad ↔ Activos','Utilidad ↔ Patrimonio']},
+ 4:{icon:'📊',title:'El cuadro de mando: consolidación',p:[
+  'Analizar un indicador aislado da una visión incompleta: una empresa puede tener liquidez alta y, a la vez, recursos poco utilizados o una estructura financiera que requiere atención.',
+  'Por eso se integran las familias de ratios (liquidez, solvencia, gestión y rentabilidad) en un '+B('cuadro de mando')+'. Herramientas como el Sistema DuPont o el Altman Z-Score son ejemplos de análisis integrado; aquí no los calcularás: tu objetivo es consolidar qué datos necesita cada familia de ratios.'],
+  k:['LIQUIDEZ','⬇ SOLVENCIA','⬇ GESTIÓN','⬇ RENTABILIDAD','⬇ DIAGNÓSTICO FINANCIERO INTEGRADO']}
+};
+function buildBriefing(n){
+  const t=THEORY[n], wrap=el('div','screen');
+  wrap.appendChild(missionTag(n,4,MTITLE[n]));
+  const c=el('div','glass mission-body');
+  c.innerHTML='<div class="cleo-name">📘 CÁPSULA FINANCIERA · DATOS NECESARIOS PARA LA MISIÓN</div>'
+   +'<h3 class="title-font" style="margin:8px 0 10px;font-size:20px">'+t.icon+' '+t.title+'</h3>'
+   +t.p.map(x=>'<p class="theory-p">'+x+'</p>').join('')
+   +'<div class="cleo-name" style="margin-top:10px">CONCEPTOS CLAVE</div><div class="key-grid">'+t.k.map(k=>'<div class="key-chip">'+k+'</div>').join('')+'</div>'
+   +'<p class="theory-p" style="margin-top:12px;color:var(--orange);font-size:12px">C.L.E.O. RECOMIENDA: lectura rápida; el tiempo de la operación sigue corriendo.</p>';
+  const row=el('div','actions-row'); row.style.marginTop='8px';
+  const b=el('button','btn btn-primary','ENTENDIDO, CONTINUAR');
+  b.onclick=()=>{ state.briefing=false; render(); };
+  row.appendChild(b); c.appendChild(row); wrap.appendChild(c);
+  return wrap;
+}
+const REFS=[
+ {t:'Bărbuță-Mișu, N., Madaleno, M., & Ilie, V. (2019). Analysis of Risk Factors Affecting Firms’ Financial Performance—Support for Managerial Decision-Making. Sustainability, 11(18), 4838.'},
+ {t:'Franklin, M., Graybeal, P., & Cooper, D. (2019). Principles of Accounting, Volume 1: Financial Accounting. OpenStax.'},
+ {t:'IFRS Foundation. IAS 1 — Presentation of Financial Statements.'},
+ {t:'OpenStax. Principles of Finance, Chapter 5: Financial Statements.'},
+ {t:'Sanz Santolaria, C. J. (2002). Guía de los principales ratios. Acciones e Investigaciones Sociales, (14), 137–152.'},
+ {t:'Rodríguez, A. & López, M. (2020). El análisis financiero como herramienta de gestión estratégica en las organizaciones.'},
+ {t:'PwC & Stanford Health Care. (2018). Consolidated Financial Statements and Financial Ratio Frameworks.'},
+ {t:'Altman, E. I. & Onsay, E. (2021). Financial distress and insolvency prediction through multi-ratio Z-score modeling. Journal of Applied Technology and Innovation (JATI), 26(1).'},
+ {t:'European Sustainability & Financial Performance Group. (2019). Evaluating Profitability (ROA/ROE), Efficiency, and Capital Structure in Corporate Entities. Sustainability Journal, 11(4838).'},
+ {t:'Guía Teórica de Contabilidad Financiera. Fundamentos de ratios de liquidez, solvencia, gestión y rentabilidad. Lectura Módulo 1.'}
+].sort((a,b)=>a.t.localeCompare(b.t,'es'));
+function buildRefsModal(){
+  const overlay=el('div','modal-overlay');
+  overlay.onclick=(e)=>{ if(e.target===overlay){ state.showRefs=false; render(); } };
+  const box=el('div','glass modal-box'); box.style.maxHeight='85vh'; box.style.overflowY='auto'; box.style.maxWidth='560px';
+  box.innerHTML='<h2 class="title-font" style="font-size:18px;">📚 Fuentes y referencias</h2><p style="font-size:13px;color:#C7D0E4;">Las siguientes fuentes fueron utilizadas como apoyo para desarrollar las cápsulas teóricas y las actividades de FinQuest.</p>';
+  REFS.forEach((r,i)=>{
+    const c=el('div','ref-card',r.t);
+    box.appendChild(c);
+  });
+  const close=el('button','btn btn-secondary','CERRAR'); close.style.marginTop='12px';
+  close.onclick=()=>{ state.showRefs=false; render(); };
+  box.appendChild(close); overlay.appendChild(box);
+  return overlay;
+}
+
+/* ---------------- Render ---------------- */
+const root = document.getElementById('app');
+
+function render(){
+  root.innerHTML = '';
+  root.appendChild(buildHeader());
+  const main = document.createElement('main');
+  main.appendChild(buildScreen());
+  root.appendChild(main);
+  if(state.showLicense) root.appendChild(buildLicenseModal());
+  if(state.showRefs) root.appendChild(buildRefsModal());
+  if(state.screen==='timeout') root.appendChild(buildTimeoutModal());
+  applyFx(); drawLines();
+}
+
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+
+function buildHeader(){
+  const h = el('header','hud');
+  const brand = el('div','brand');
+  brand.innerHTML = `<span class="b1 title-font">FinQuest</span><span class="b2">Operación Rescate Corporativo</span>`;
+  h.appendChild(brand);
+
+  const conf = el('div','confidence-wrap');
+  conf.innerHTML = `<div class="confidence-label">${ICON.shield} NIVEL DE CONFIANZA DE LOS INVERSORES</div>
+    <div class="progress-track"><div class="progress-fill" style="width:${state.confidence}%"></div></div>
+    <div class="progress-pct mono">${state.confidence}%</div>`;
+  h.appendChild(conf);
+
+  const timer = el('div', 'timer-box glass '+timerClass());
+  timer.innerHTML = `${ICON.clock}<span class="mono">${fmtTime(state.timeRemaining)}</span>`;
+  h.appendChild(timer);
+  return h;
+}
+
+function cleoBox(text){
+  const box = el('div','glass cleo-msg');
+  box.innerHTML = `<div class="cleo-avatar">${ICON.robot}</div>
+    <div class="cleo-text"><div class="cleo-name">C.L.E.O. · Chief Ledger &amp; Economic Operator</div><p>${text}</p></div>`;
+  return box;
+}
+
+function feedbackBox(){
+  if(!state.feedback) return null;
+  const isCorrect = state.feedback.type==='correct';
+  const box = el('div', 'feedback-box glass '+(isCorrect?'fb-correct':'fb-incorrect'));
+  box.innerHTML = `<div class="fb-icon">${isCorrect?ICON.check:ICON.alert}</div>
+    <div class="cleo-text"><div class="cleo-name">${isCorrect?'C.L.E.O.':'⚠️ C.L.E.O.'}</div><p>${state.feedback.text}</p></div>`;
+  return box;
+}
+
+function buildScreen(){
+  switch(state.screen){
+    case 'intro': return buildIntro();
+    case 'm1': return state.briefing?buildBriefing(1):buildMission1();
+    case 'm2': return state.briefing?buildBriefing(2):buildMission2();
+    case 'm3': return state.briefing?buildBriefing(3):buildMission3();
+    case 'm4': return state.briefing?buildBriefing(4):buildMission4();
+    case 'victory': return buildVictory();
+    case 'final': return buildFinal();
+    case 'timeout': return el('div','screen'); // handled by modal
+    default: return buildIntro();
+  }
+}
+
+function buildIntro(){
+  const wrap = el('div','screen');
+  const card = el('div','glass intro-card');
+  card.innerHTML = `
+    <div class="sub">DIAGNÓSTICO FINANCIERO EXPRESS</div>
+    <h1 class="title-font">FinQuest: Operación Rescate Corporativo</h1>
+    <div class="intro-facts">
+      <div>💼 Tu rol: Analista Financiero Táctico (AFT).</div>
+      <div>🏢 Industrias Nova necesita tu ayuda.</div>
+      <div>⏱️ Tienes 15 minutos.</div>
+      <div>🎯 Debes llevar la confianza de los inversores de 0% a 100%.</div>
+      <div>🤖 C.L.E.O. será tu guía.</div>
+    </div>
+  `;
+  const btn = el('button','btn btn-primary','INICIAR OPERACIÓN');
+  btn.onclick = ()=>{ state.screen='m1'; setupMission1(); state.briefing=true; startTimer(); render(); };
+  card.appendChild(btn);
+  const cr = el('div',null,'Designed and created by José Cano Félix'); cr.style.cssText='font-size:11px;color:#8FA3C4;opacity:.75;letter-spacing:.4px;margin-top:2px;'; card.appendChild(cr);
+  const lic = el('button','license-link','Ver licencia · CC BY-NC-ND 4.0');
+  lic.onclick = ()=>{ state.showLicense=true; render(); };
+  card.appendChild(lic);
+  wrap.appendChild(card);
+  wrap.appendChild(cleoBox(CLEO.intro));
+  return wrap;
+}
+
+function missionTag(n,total,title){
+  const wrap = el('div');
+  wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.gap='4px';
+  wrap.innerHTML = `<span class="mission-tag">${ICON.target} MISIÓN ${n} DE ${total} · PREGUNTA ${state.round[n]} DE 2</span><h2 class="mission-title title-font">${title}</h2>`;
+  return wrap;
+}
+
+/* ---- Mission 1: Drag & Drop ---- */
+function buildMission1(){
+  const wrap = el('div','screen');
+  wrap.appendChild(missionTag(1,4,'El Escaneo de la Zona Cero'));
+  wrap.appendChild(cleoBox(CLEO.m1));
+
+  const body = el('div','glass mission-body');
+  const cardsWrap = el('div','dnd-cards');
+  const m = state.mission1;
+
+  m.items.forEach((item, idx)=>{
+    const c = el('div','dnd-card'+(item.placed?' placed':''), item.t);
+    c.draggable = !item.placed;
+    c.dataset.idx = idx;
+    c.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', idx); c.classList.add('dragging'); });
+    c.addEventListener('dragend', ()=> c.classList.remove('dragging'));
+    // touch/tap fallback: click selects, then click vault to place
+    c.addEventListener('click', ()=>{
+      if(item.placed) return;
+      m.selectedIdx = idx;
+      document.querySelectorAll('.dnd-card').forEach(x=>x.style.outline='');
+      c.style.outline='2px solid var(--teal-bright)';
+    });
+    cardsWrap.appendChild(c);
+  });
+  body.appendChild(cardsWrap);
+
+  const vaults = el('div','vaults');
+  const vaultDefs = [{id:'bg',label:'BALANCE GENERAL'},{id:'er',label:'ESTADO DE RESULTADOS'}];
+  vaultDefs.forEach(v=>{
+    const vEl = el('div','vault');
+    vEl.innerHTML = `<h4>${v.label}</h4>`;
+    m.items.filter(i=>i.placed && i.dest===v.id).forEach(i=>{
+      vEl.appendChild(el('div','slot-item', i.t));
+    });
+    vEl.addEventListener('dragover', e=>{ e.preventDefault(); vEl.classList.add('dragover'); });
+    vEl.addEventListener('dragleave', ()=> vEl.classList.remove('dragover'));
+    vEl.addEventListener('drop', e=>{
+      e.preventDefault(); vEl.classList.remove('dragover');
+      const idx = e.dataTransfer.getData('text/plain');
+      handleM1Drop(idx, v.id);
+    });
+    vEl.addEventListener('click', ()=>{
+      if(m.selectedIdx !== undefined && m.selectedIdx !== null){
+        handleM1Drop(m.selectedIdx, v.id);
+        m.selectedIdx = null;
+      }
+    });
+    vaults.appendChild(vEl);
+  });
+  body.appendChild(vaults);
+  wrap.appendChild(body);
+
+  const fb = feedbackBox();
+  if(fb) wrap.appendChild(fb);
+  wrap.appendChild(buildActionsRow(1,'m1'));
+  return wrap;
+}
+
+function handleM1Drop(idx, vaultId){
+  const m = state.mission1;
+  const item = m.items[idx];
+  if(!item || item.placed) return;
+  if(item.dest === vaultId){
+    item.placed = true;
+    if(m.items.every(i=>i.placed)){
+      state.feedback = {type:'correct', text:'Mapa financiero asegurado. Ya sabes dónde encontrar los datos que alimentarán nuestro diagnóstico.'};
+      setConfidence(1); state.fx='ok';
+    } else state.feedback = null;
+  } else {
+    failFb(1,m.v); m.items = shuffle(m.items); m.selectedIdx = null;
+  }
+  render();
+}
+
+/* ---- Mission 2: Selection ---- */
+function buildMission2(){
+  const wrap = el('div','screen');
+  wrap.appendChild(missionTag(2,4,'Signos Vitales'));
+  wrap.appendChild(cleoBox(CLEO.m2));
+  const body = el('div','glass mission-body');
+  const m = state.mission2;
+  body.appendChild(el('p', null, '<strong>'+m.q+'</strong> Selecciona todos los elementos correctos antes de validar.'));
+  const grid = el('div','select-grid');
+  m.options.forEach(opt=>{
+    const item = el('div','select-item'+(m.selected.includes(opt)?' selected':''), opt);
+    item.onclick = ()=>{
+      if(state.roundDone[2]) return;
+      const i = m.selected.indexOf(opt);
+      if(i>-1) m.selected.splice(i,1); else m.selected.push(opt);
+      render();
+    };
+    grid.appendChild(item);
+  });
+  body.appendChild(grid);
+  const validate = el('button','btn btn-primary','VALIDAR');
+  validate.style.marginTop='14px';
+  validate.onclick = ()=>{
+    if(state.roundDone[2]) return;
+    const ok = m.selected.length===m.correct.length && m.correct.every(x=>m.selected.includes(x));
+    if(ok){
+      state.feedback = {type:'correct', text:'Excelente. '+m.v.ex};
+      setConfidence(2); state.fx='ok';
+    } else failFb(2,m.v);
+    render();
+  };
+  body.appendChild(validate);
+  wrap.appendChild(body);
+  const fb = feedbackBox(); if(fb) wrap.appendChild(fb);
+  wrap.appendChild(buildActionsRow(2,'m2'));
+  return wrap;
+}
+
+/* ---- Mission 3: Spot the error (identify, then fix) ---- */
+function buildMission3(){
+  const wrap = el('div','screen');
+  wrap.appendChild(missionTag(3,4,'El Rendimiento del Motor'));
+  wrap.appendChild(cleoBox(CLEO.m3));
+  const body = el('div','glass mission-body');
+  const m = state.mission3, done = state.roundDone[3];
+  body.appendChild(el('p', null, `<strong>Fórmula corrupta detectada (${m.label}):</strong>`));
+  const fx = el('div','formula-box mono');
+  if(done){ fx.textContent = m.correctFull+' = '+m.num+' / '+m.correct; fx.textContent = m.ex.split(':')[0]; }
+  else {
+    fx.appendChild(document.createTextNode(m.label+' = '));
+    [m.num,m.wrong].forEach((t,i)=>{
+      if(i) fx.appendChild(document.createTextNode(' / '));
+      const b = el('span','tok'+(m.step===2&&t===m.wrong?' tok-err':''), t);
+      if(m.step===1) b.onclick = ()=>{
+        if(t===m.wrong){ m.step=2; state.fx='ok'; state.feedback={type:'correct',text:'Variable incorrecta identificada. Ahora selecciona la variable que debe reemplazarla.'}; }
+        else failFb(3,m.v);
+        render();
+      };
+      fx.appendChild(b);
+    });
+    if(m.step===2) fx.appendChild(el('span','formula-error',' 🔴 ERROR'));
+  }
+  body.appendChild(fx);
+  if(!done){
+    if(m.step===1) body.appendChild(el('p',null,'Paso 1: toca la variable de la fórmula que es incorrecta.'));
+    else {
+      body.appendChild(el('p',null,'Paso 2: selecciona la variable correcta que debe reemplazarla.'));
+      const grid = el('div','select-grid');
+      m.options.forEach(opt=>{
+        const item = el('div','select-item'+(m.selected===opt?' selected':''), opt);
+        item.onclick = ()=>{ m.selected = opt; render(); };
+        grid.appendChild(item);
+      });
+      body.appendChild(grid);
+      const validate = el('button','btn btn-primary','CORREGIR');
+      validate.style.marginTop='14px'; validate.disabled = !m.selected;
+      validate.onclick = ()=>{
+        if(m.selected === m.correct){
+          state.feedback = {type:'correct', text:'Código purgado. '+m.ex}; setConfidence(3); state.fx='ok';
+        } else { m.selected=null; failFb(3,m.v); }
+        render();
+      };
+      body.appendChild(validate);
+    }
+  }
+  wrap.appendChild(body);
+  const fb = feedbackBox(); if(fb) wrap.appendChild(fb);
+  wrap.appendChild(buildActionsRow(3,'m3'));
+  return wrap;
+}
+
+/* ---- Mission 4: Matching with lines ---- */
+function buildMission4(){
+  const wrap = el('div','screen');
+  wrap.appendChild(missionTag(4,4,'El Diagnóstico Final'));
+  wrap.appendChild(cleoBox(CLEO.m4));
+  const body = el('div','glass mission-body');
+  const m = state.mission4;
+  body.appendChild(el('p',null,'<strong>'+m.prompt+'</strong> Toca un elemento de la izquierda y luego su pareja de la derecha. Para deshacer una conexión, toca de nuevo su elemento de la izquierda.'));
+  const matchWrap = el('div','match-wrap');
+  const colA = el('div','match-col');
+  m.colA.forEach(a=>{
+    const isMatched = !!m.matched[a.id];
+    const it = el('div','match-item'+(isMatched?' matched':'')+(m.selectedA===a.id?' selected':''), a.label+(isMatched?' ✅':''));
+    it.dataset.a = a.id;
+    it.onclick = ()=>{ if(state.roundDone[4]) return; if(isMatched) delete m.matched[a.id]; m.selectedA = a.id; state.feedback=null; render(); };
+    colA.appendChild(it);
+  });
+  const colB = el('div','match-col');
+  m.colB.forEach(b=>{
+    const isMatched = !!m.matched[b.id];
+    const it = el('div','match-item'+(isMatched?' matched':'')+(m.wrongFlash===b.id?' wrong-flash':''), b.label+(isMatched?' ✅':'')+(m.wrongFlash===b.id?' ⚠':''));
+    it.dataset.b = b.id;
+    it.onclick = ()=>{
+      if(isMatched || !m.selectedA) return;
+      if(m.selectedA === b.id){
+        m.matched[b.id] = true; m.newId = b.id; m.selectedA = null;
+        if(Object.keys(m.matched).length === m.colA.length){
+          state.feedback = {type:'correct', text:m.ok};
+          setConfidence(4); state.fx='ok';
+        } else state.feedback = null;
+      } else {
+        failFb(4,{h:[H4,FAM_H[m.selectedA]],g:G4});
+        m.wrongFlash = b.id; m.wrongPair = {a:m.selectedA,b:b.id}; m.selectedA = null;
+        setTimeout(()=>{ m.wrongFlash=null; m.wrongPair=null; render(); }, 450);
+      }
+      render();
+    };
+    colB.appendChild(it);
+  });
+  matchWrap.appendChild(colA);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('class','match-svg'); matchWrap.appendChild(svg);
+  matchWrap.appendChild(colB);
+  body.appendChild(matchWrap);
+  wrap.appendChild(body);
+  const fb = feedbackBox(); if(fb) wrap.appendChild(fb);
+  wrap.appendChild(buildActionsRow(4,'m4'));
+  return wrap;
+}
+
+function buildActionsRow(num, key){
+  const row = el('div','actions-row'); const fb = state.feedback;
+  if(state.roundDone[num] && fb && fb.type==='correct'){
+    const second = state.round[num]===2;
+    const b = el('button','btn btn-primary', second?'CONTINUAR →':'SIGUIENTE PREGUNTA →');
+    b.onclick = ()=>{
+      if(second) goNext(key);
+      else { state.round[num]=2; state.feedback=null; [null,setupMission1,setupMission2,setupMission3,setupMission4][num](); render(); }
+    };
+    row.appendChild(b);
+  } else if(fb && fb.type==='incorrect'){
+    const retry = el('button','btn btn-secondary','INTENTAR NUEVAMENTE');
+    retry.onclick = ()=>{ state.feedback=null; reshuffle(num); render(); };
+    row.appendChild(retry);
+  }
+  return row;
+}
+
+const MISSION_NAMES = {1:'El Escaneo de la Zona Cero (Liquidez/Solvencia)',2:'Signos Vitales (Liquidez)',3:'El Rendimiento del Motor (Rentabilidad)',4:'El Diagnóstico Final (Integración)'};
+
+function buildReviewPanel(){
+  const totalFails = state.attempts[1]+state.attempts[2]+state.attempts[3]+state.attempts[4];
+  const perfectMissions = Object.keys(state.attempts).filter(k=>state.attempts[k]===0).length;
+  const hardest = Object.entries(state.attempts).sort((a,b)=>b[1]-a[1])[0];
+
+  let tierText;
+  if(totalFails === 0){
+    tierText = 'Resolviste las cuatro misiones sin un solo intento fallido. Tu manejo de los ratios y su relación con los estados financieros es sólido y consistente.';
+  } else if(totalFails <= 3){
+    tierText = 'Tuviste un desempeño firme, con pocos tropiezos. Ya distingues con claridad qué rubros necesita cada tipo de ratio.';
+  } else if(totalFails <= 7){
+    tierText = 'Completaste el diagnóstico, pero con varios intentos fallidos en el camino. Conviene repasar la diferencia entre los rubros del Balance General y del Estado de Resultados.';
+  } else {
+    tierText = 'Lograste completar la operación, aunque con bastantes dificultades. Te recomendamos repasar con calma qué información alimenta cada familia de ratios antes de tu próximo intento.';
+  }
+
+  const detailRows = Object.keys(state.attempts).map(k=>{
+    const fails = state.attempts[k];
+    const label = fails===0 ? 'Sin errores' : fails===1 ? '1 intento fallido' : `${fails} intentos fallidos`;
+    return `<tr><td>${MISSION_NAMES[k]}</td><td class="mono">${label}</td></tr>`;
+  }).join('');
+
+  const focusText = hardest[1] > 0
+    ? `El mayor número de intentos fallidos ocurrió en <strong>${MISSION_NAMES[hardest[0]]}</strong>: es un buen punto de partida para tu repaso.`
+    : 'No hubo una misión particularmente difícil: tu comprensión fue pareja en todo el diagnóstico.';
+
+  const panel = el('div','glass');
+  panel.style.padding='18px'; panel.style.marginTop='10px'; panel.style.textAlign='left';
+  panel.innerHTML = `
+    <div class="cleo-name" style="margin-bottom:8px;">C.L.E.O. · Informe de desempeño</div>
+    <p style="font-size:14px;line-height:1.6;color:#E7ECF6;">${tierText}</p>
+    <p style="font-size:13.5px;line-height:1.6;color:#C7D0E4;">${focusText}</p>
+    <table class="summary-table">
+      <tr><th>Misión</th><th>Resultado</th></tr>
+      ${detailRows}
+      <tr><td><strong>Total</strong></td><td class="mono"><strong>${totalFails} intento(s) fallido(s)</strong></td></tr>
+    </table>
+    <p style="font-size:13.5px;line-height:1.6;color:#C7D0E4;margin-top:10px;">Recomendación: vuelve a intentar la operación las veces que necesites. Cada repetición usa un nuevo conjunto de datos, así que te ayudará a consolidar cuándo usar cada ratio y de dónde sale la información que lo alimenta.</p>
+  `;
+  const close = el('button','btn btn-secondary','Cerrar informe');
+  close.style.marginTop='10px';
+  close.onclick = ()=>{ state.showReview=false; render(); };
+  panel.appendChild(close);
+  return panel;
+}
+
+function buildVictory(){
+  const wrap = el('div','screen');
+  const card = el('div','glass intro-card');
+  card.innerHTML = `
+    <div class="victory-badge">🎯</div>
+    <h1 class="title-font">Sistema Restaurado</h1>
+    <div class="sub">CONFIANZA DE LOS INVERSORES: 100%</div>
+  `;
+  card.appendChild(cleoBox("Operación completada, AFT. Has logrado identificar los principales tipos de ratios financieros y relacionarlos con la información financiera necesaria para su análisis."));
+
+  const cat = CATS.find(c=>state.elapsed<=c.max) || CATS[3];
+  const ev = el('div','glass eval-cat'); ev.style.marginTop='10px';
+  ev.innerHTML = `<div class="cleo-name">EVALUACIÓN DE LA OPERACIÓN</div><div class="title-font" style="font-size:20px;">${cat.ico} ${cat.n}</div><div class="mono" style="margin-top:4px;">⏱ ${fmtTime(state.elapsed)}</div>`;
+  card.appendChild(ev);
+  const unlock = el('div','glass');
+  unlock.style.padding='18px'; unlock.style.marginTop='10px';
+  unlock.innerHTML = `<div style="font-size:13px;color:var(--orange);font-weight:700;">🏆 LOGRO DESBLOQUEADO</div>
+    <div style="font-size:18px;font-weight:700;margin-top:4px;">Analista Financiero Táctico</div>
+    <div style="font-size:13px;color:#C7D0E4;margin-top:4px;">Asocia los principales tipos de ratios financieros con los rubros específicos de los estados financieros necesarios para su análisis.</div>`;
+  card.appendChild(unlock);
+
+  const table = el('table','summary-table');
+  table.innerHTML = `<tr><th>Familia</th><th>Información clave</th></tr>
+    <tr><td>Liquidez</td><td>Activo Corriente + Pasivo Corriente</td></tr>
+    <tr><td>Solvencia</td><td>Deuda/Pasivos + Patrimonio/Activos</td></tr>
+    <tr><td>Gestión</td><td>Ventas + activos relacionados con la actividad</td></tr>
+    <tr><td>Rentabilidad</td><td>Utilidades + activos/patrimonio</td></tr>`;
+  card.appendChild(table);
+
+  const btnRow = el('div','actions-row');
+  btnRow.style.marginTop='16px'; btnRow.style.justifyContent='center';
+  const review = el('button','btn btn-secondary','🔍 REVISAR DIAGNÓSTICO');
+  review.onclick = finishOperation;
+  const restart = el('button','btn btn-primary','🔄 REINICIAR OPERACIÓN');
+  restart.onclick = resetGame;
+  const refs = el('button','btn btn-secondary','📚 REFERENCIAS BIBLIOGRÁFICAS');
+  refs.onclick = ()=>{ state.showRefs=true; render(); };
+  btnRow.appendChild(review); btnRow.appendChild(refs); btnRow.appendChild(restart);
+  card.appendChild(btnRow);
+
+  if(state.showReview) card.appendChild(buildReviewPanel());
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function buildFinal(){
+  const cat = CATS.find(c=>state.elapsed<=c.max) || CATS[3];
+  const wrap = el('div','screen'), card = el('div','glass intro-card');
+  card.innerHTML = `<div class="victory-badge">🏆</div>
+    <h1 class="title-font">DIAGNÓSTICO COMPLETADO</h1>
+    <div class="sub">EVALUACIÓN DE LA OPERACIÓN</div>
+    <div class="glass eval-cat"><div class="title-font" style="font-size:24px;">${cat.ico} ${cat.n}</div></div>
+    <div class="eval-grid">
+      <div class="glass eval-box"><div class="cleo-name">⏱ TIEMPO EMPLEADO</div><div class="mono eval-val">${fmtTime(state.elapsed)}</div></div>
+      <div class="glass eval-box"><div class="cleo-name">📊 NIVEL DE CONFIANZA DE LOS INVERSORES</div><div class="mono eval-val" style="color:var(--green)">100%</div></div>
+    </div>`;
+  card.appendChild(cleoBox(cat.m));
+  const row = el('div','actions-row'); row.style.justifyContent='center'; row.style.marginTop='12px';
+  const rev = el('button','btn btn-secondary','📋 VER MI DIAGNÓSTICO'); rev.onclick = ()=>{ state.showReview=!state.showReview; render(); };
+  const refs = el('button','btn btn-secondary','📚 REFERENCIAS BIBLIOGRÁFICAS'); refs.onclick = ()=>{ state.showRefs=true; render(); };
+  const again = el('button','btn btn-primary','🔄 REINTENTAR OPERACIÓN'); again.onclick = resetGame;
+  row.appendChild(rev); row.appendChild(refs); row.appendChild(again); card.appendChild(row);
+  if(state.showReview) card.appendChild(buildReviewPanel());
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function buildTimeoutModal(){
+  const overlay = el('div','modal-overlay');
+  const box = el('div','glass modal-box');
+  box.innerHTML = `<div style="font-size:40px;">⏱️</div>
+    <h2 class="title-font">Operación Interrumpida</h2>
+    <p>El tiempo se agotó antes de completar el diagnóstico.<br>La confianza de los inversionistas alcanzó <strong class="mono">${state.confidence}%</strong>.</p>`;
+  box.appendChild(cleoBox("La operación necesita un nuevo intento. Ahora conoces mejor el sistema. ¿Quieres reiniciar?"));
+  const row = el('div','actions-row'); row.style.justifyContent='center'; row.style.marginTop='14px';
+  const retry = el('button','btn btn-primary','REINTENTAR OPERACIÓN');
+  retry.onclick = resetGame;
+  row.appendChild(retry);
+  box.appendChild(row);
+  overlay.appendChild(box);
+  return overlay;
+}
+
+function buildLicenseModal(){
+  const overlay = el('div','modal-overlay');
+  overlay.onclick = (e)=>{ if(e.target===overlay){ state.showLicense=false; render(); } };
+  const box = el('div','glass modal-box');
+  box.innerHTML = `<h2 class="title-font" style="font-size:18px;">Licencia del recurso</h2>
+    <p style="font-size:13px;color:#C7D0E4;">© FinQuest: Operación Rescate Corporativo — Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)</p>
+    <ul style="text-align:left;font-size:13px;color:#D7DEEC;line-height:1.7;">
+      <li>Se permite compartir el recurso.</li>
+      <li>Se debe reconocer la autoría.</li>
+      <li>No se permite el uso comercial.</li>
+      <li>No se permite modificar o transformar el recurso para redistribuirlo.</li>
+    </ul>`;
+  const close = el('button','btn btn-secondary','Cerrar');
+  close.onclick = ()=>{ state.showLicense=false; render(); };
+  box.appendChild(close);
+  overlay.appendChild(box);
+  return overlay;
+}
+
+/* init */
+render();
+</script>
+</body>
+</html>
