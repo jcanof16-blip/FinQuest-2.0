@@ -327,7 +327,7 @@ function startTimer(){
 
 function finishOperation(){
   clearInterval(state.timerId);
-  state.showReview = false; state.screen = 'final';
+  state.showReview = false; state.screen = 'victory';
   render();
 }
 const CATS=[
@@ -443,7 +443,9 @@ function buildRefsModal(){
   });
   const close=el('button','btn btn-secondary','CERRAR'); close.style.marginTop='12px';
   close.onclick=()=>{ state.showRefs=false; render(); };
-  box.appendChild(close); overlay.appendChild(box);
+  box.appendChild(close);
+  addCloseX(box, ()=>{ state.showRefs=false; render(); });
+  overlay.appendChild(box);
   return overlay;
 }
 
@@ -458,6 +460,7 @@ function render(){
   root.appendChild(main);
   if(state.showLicense) root.appendChild(buildLicenseModal());
   if(state.showRefs) root.appendChild(buildRefsModal());
+  if(state.showReview) root.appendChild(buildReviewModal());
   if(state.screen==='timeout') root.appendChild(buildTimeoutModal());
   applyFx(); drawLines();
 }
@@ -506,7 +509,6 @@ function buildScreen(){
     case 'm3': return state.briefing?buildBriefing(3):buildMission3();
     case 'm4': return state.briefing?buildBriefing(4):buildMission4();
     case 'victory': return buildVictory();
-    case 'final': return buildFinal();
     case 'timeout': return el('div','screen'); // handled by modal
     default: return buildIntro();
   }
@@ -816,7 +818,7 @@ function buildReviewPanel(){
     <table class="summary-table">
       <tr><th>Misión</th><th>Resultado</th></tr>
       ${detailRows}
-      <tr><td><strong>Total</strong></td><td class="mono"><strong>${totalFails} intento(s) fallido(s)</strong></td></tr>
+      <tr><td><strong>Total</strong></td><td class="mono"><strong>${totalFails===0?'Sin errores':totalFails===1?'1 intento fallido':totalFails+' intentos fallidos'}</strong></td></tr>
     </table>
     <p style="font-size:13.5px;line-height:1.6;color:#C7D0E4;margin-top:10px;">Recomendación: vuelve a intentar la operación las veces que necesites. Cada repetición usa un nuevo conjunto de datos, así que te ayudará a consolidar cuándo usar cada ratio y de dónde sale la información que lo alimenta.</p>
   `;
@@ -828,19 +830,18 @@ function buildReviewPanel(){
 }
 
 function buildVictory(){
-  const wrap = el('div','screen');
-  const card = el('div','glass intro-card');
-  card.innerHTML = `
-    <div class="victory-badge">🎯</div>
-    <h1 class="title-font">Sistema Restaurado</h1>
-    <div class="sub">CONFIANZA DE LOS INVERSORES: 100%</div>
-  `;
-  card.appendChild(cleoBox("Operación completada, AFT. Has logrado identificar los principales tipos de ratios financieros y relacionarlos con la información financiera necesaria para su análisis."));
-
   const cat = CATS.find(c=>state.elapsed<=c.max) || CATS[3];
-  const ev = el('div','glass eval-cat'); ev.style.marginTop='10px';
-  ev.innerHTML = `<div class="cleo-name">EVALUACIÓN DE LA OPERACIÓN</div><div class="title-font" style="font-size:20px;">${cat.ico} ${cat.n}</div><div class="mono" style="margin-top:4px;">⏱ ${fmtTime(state.elapsed)}</div>`;
-  card.appendChild(ev);
+  const wrap = el('div','screen'), card = el('div','glass intro-card');
+  card.innerHTML = `<div class="victory-badge">🏆</div>
+    <h1 class="title-font">DIAGNÓSTICO COMPLETADO</h1>
+    <div class="sub">EVALUACIÓN DE LA OPERACIÓN</div>
+    <div class="glass eval-cat"><div class="title-font" style="font-size:24px;">${cat.ico} ${cat.n}</div></div>
+    <div class="eval-grid">
+      <div class="glass eval-box"><div class="cleo-name">⏱ TIEMPO EMPLEADO</div><div class="mono eval-val">${fmtTime(state.elapsed)}</div></div>
+      <div class="glass eval-box"><div class="cleo-name">📊 NIVEL DE CONFIANZA DE LOS INVERSORES</div><div class="mono eval-val" style="color:var(--green)">100%</div></div>
+    </div>`;
+  card.appendChild(cleoBox(cat.m));
+
   const unlock = el('div','glass');
   unlock.style.padding='18px'; unlock.style.marginTop='10px';
   unlock.innerHTML = `<div style="font-size:13px;color:var(--orange);font-weight:700;">🏆 LOGRO DESBLOQUEADO</div>
@@ -859,40 +860,32 @@ function buildVictory(){
   const btnRow = el('div','actions-row');
   btnRow.style.marginTop='16px'; btnRow.style.justifyContent='center';
   const review = el('button','btn btn-secondary','🔍 REVISAR DIAGNÓSTICO');
-  review.onclick = finishOperation;
-  const restart = el('button','btn btn-primary','🔄 REINICIAR OPERACIÓN');
-  restart.onclick = resetGame;
+  review.onclick = ()=>{ state.showReview=true; render(); };
   const refs = el('button','btn btn-secondary','📚 REFERENCIAS BIBLIOGRÁFICAS');
   refs.onclick = ()=>{ state.showRefs=true; render(); };
+  const restart = el('button','btn btn-primary','🔄 REINICIAR OPERACIÓN');
+  restart.onclick = resetGame;
   btnRow.appendChild(review); btnRow.appendChild(refs); btnRow.appendChild(restart);
   card.appendChild(btnRow);
-
-  if(state.showReview) card.appendChild(buildReviewPanel());
-
   wrap.appendChild(card);
   return wrap;
 }
 
-function buildFinal(){
-  const cat = CATS.find(c=>state.elapsed<=c.max) || CATS[3];
-  const wrap = el('div','screen'), card = el('div','glass intro-card');
-  card.innerHTML = `<div class="victory-badge">🏆</div>
-    <h1 class="title-font">DIAGNÓSTICO COMPLETADO</h1>
-    <div class="sub">EVALUACIÓN DE LA OPERACIÓN</div>
-    <div class="glass eval-cat"><div class="title-font" style="font-size:24px;">${cat.ico} ${cat.n}</div></div>
-    <div class="eval-grid">
-      <div class="glass eval-box"><div class="cleo-name">⏱ TIEMPO EMPLEADO</div><div class="mono eval-val">${fmtTime(state.elapsed)}</div></div>
-      <div class="glass eval-box"><div class="cleo-name">📊 NIVEL DE CONFIANZA DE LOS INVERSORES</div><div class="mono eval-val" style="color:var(--green)">100%</div></div>
-    </div>`;
-  card.appendChild(cleoBox(cat.m));
-  const row = el('div','actions-row'); row.style.justifyContent='center'; row.style.marginTop='12px';
-  const rev = el('button','btn btn-secondary','📋 VER MI DIAGNÓSTICO'); rev.onclick = ()=>{ state.showReview=!state.showReview; render(); };
-  const refs = el('button','btn btn-secondary','📚 REFERENCIAS BIBLIOGRÁFICAS'); refs.onclick = ()=>{ state.showRefs=true; render(); };
-  const again = el('button','btn btn-primary','🔄 REINTENTAR OPERACIÓN'); again.onclick = resetGame;
-  row.appendChild(rev); row.appendChild(refs); row.appendChild(again); card.appendChild(row);
-  if(state.showReview) card.appendChild(buildReviewPanel());
-  wrap.appendChild(card);
-  return wrap;
+function addCloseX(box, onClose){
+  const x = el('button',null,'✕');
+  x.setAttribute('aria-label','Cerrar');
+  x.style.cssText='position:sticky;top:0;float:right;z-index:3;width:32px;height:32px;margin:-4px -4px 0 8px;border-radius:50%;border:1px solid var(--glass-border);background:rgba(10,18,40,.85);color:#E7ECF6;font-size:15px;line-height:1;cursor:pointer;';
+  x.onclick = onClose;
+  box.insertBefore(x, box.firstChild);
+}
+function buildReviewModal(){
+  const overlay = el('div','modal-overlay');
+  overlay.onclick = (e)=>{ if(e.target===overlay){ state.showReview=false; render(); } };
+  const box = el('div','glass modal-box'); box.style.maxHeight='85vh'; box.style.overflowY='auto'; box.style.maxWidth='560px';
+  box.appendChild(buildReviewPanel());
+  addCloseX(box, ()=>{ state.showReview=false; render(); });
+  overlay.appendChild(box);
+  return overlay;
 }
 
 function buildTimeoutModal(){
